@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <title>Generate Report PDF</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        .stepper {
+            width: 80%;
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .steps {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: flex-start;
+            width: 100%;
+        }
+
+        .step {
+            border: 2px solid #ccc;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            text-align: center;
+            line-height: 60px;
+            font-weight: bold;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .step.active {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .path {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .path-item {
+            width: 30px;
+            height: 30px;
+            background-color: #ccc;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .path-item.active {
+            background-color: #007bff;
+            color: #fff;
+        }
+
+        .path-item.completed::before {
+            content: '\2713';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            color: #fff;
+        }
+
+        .line {
+            width: 100%;
+            height: 4px;
+            background-color: #ccc;
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .line .connector {
+            width: 0;
+            height: 4px;
+            background-color: #007bff;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: width 0.3s ease-in-out;
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: space-evenly;
+            margin-top: 20px;
+
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            background-color: #007bff;
+            color: #fff;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Style for forms */
+        .step-content {
+          
+            display: none;
+            padding: 20px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            margin-top: 40px;
+            height: 1000px;
+            width: 600px;
+            min-width: 400px;
+            align-items: center;
+            border-radius: 20px;;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+
+        }
+
+        .step-content h2{
+            font-size:x-large;
+            text-align: center;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+        *, *:after, *:before {
+	box-sizing: border-box;
+}
+
+:root {
+	--c-action-primary: #2e44ff;
+	--c-action-primary-accent: #e9e5ff;
+	--c-action-secondary: #e5e5e5;
+	--c-text-primary: #0d0f21; 
+	--c-text-secondary: #6a6b76;
+	--c-background-primary: #d0d1de;
+}
+
+body {
+	font-family: "Inter", sans-serif;
+	color: var(--c-text-primary);
+	background-color: var(--c-background-primary);	
+	line-height: 1.5;
+}
+
+input, button, select, textarea {
+	font: inherit;
+}
+
+.modal {
+	width: 90%;
+	max-width: 500px;
+    display: block;
+	margin-left: auto;
+	margin-right: auto;
+	margin-top: 10vh;
+	margin-bottom: 10vh;
+	background-color: #FFF;
+	border-radius: .5rem;
+	box-shadow: 0 5px 15px rgba(#000, .2); 
+}
+
+.modal-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	padding: 1.5rem 1.5rem 1rem;
+}
+
+.logo-circle {
+	width: 3.5rem;
+	height: 3.5rem;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border-radius: 50%;
+	background-color: var(--c-action-primary-accent);
+	svg {
+		max-width: 1.5rem;
+	}
+}
+
+.btn-close {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.25rem;
+	height: 2.25rem;
+	border-radius: .25rem;
+	border: none;
+	background-color: transparent;
+	&:hover, &:focus {
+		background-color: var(--c-action-primary-accent);
+	}
+}
+
+.modal-body {
+	padding: 1rem 1.5rem;
+    
+}
+
+.modal-title {
+	font-weight: 700;
+}
+
+.modal-description {
+	color: var(--c-text-secondary);
+}
+
+.upload-area {
+	margin-top: 1.25rem;
+	border: none;
+	background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%23ccc' stroke-width='3' stroke-dasharray='6%2c 14' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+	background-color: transparent;
+	padding: 3rem;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	&:hover, &:focus {
+			background-image: url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' stroke='%232e44ff' stroke-width='3' stroke-dasharray='6%2c 14' stroke-dashoffset='0' stroke-linecap='square'/%3e%3c/svg%3e");
+	}
+} 
+
+.upload-area-icon {
+	display: block;
+	width: 2.25rem;
+	height: 2.25rem;
+	svg {
+		max-height: 100%;
+		max-width: 100%;
+	}
+}
+
+.upload-area-title {
+	margin-top: 1rem;
+	display: block;
+	font-weight: 700;
+		color: var(--c-text-primary);
+}
+
+.upload-area-description {
+		display: block;
+		color: var(--c-text-secondary);
+	strong {
+		color: var(--c-action-primary);
+		font-weight: 700;
+	}
+}
+
+.modal-footer {
+	padding: 1rem 1.5rem 1.5rem;
+	display: flex;
+	justify-content: flex-end;
+	[class*="btn-"] {
+		margin-left: .75rem;
+	}
+}
+
+.btn-secondary, .btn-primary {
+	padding: .5rem 1rem;
+	font-weight: 500;
+	border: 2px solid var(--c-action-secondary);
+	border-radius: .25rem;
+	background-color: transparent;
+}
+
+.btn-primary {
+	color: #FFF;
+	background-color: var(--c-action-primary);
+	border-color: var(--c-action-primary);
+}
+
+
+.container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+           
+            transition: transform 0.3s ease;
+        }
+
+
+
+        .form-group {
+            margin-bottom: 20px;
+           
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .container:hover .form-group {
+
+            transform: translateY(0);
+        }
+
+        h2 {
+            font-size: 24px;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #007bff;
+        }
+
+        .btn {
+            display: inline-block;
+            background-color: #007bff;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+
+
+ </style>
+</head>
+<body>
+    <div class="stepper">
+        <div class="steps">
+            <div class="step active" onclick="goToStep(0)">1</div>
+            <div class="step" onclick="goToStep(1)">2</div>
+            <div class="step" onclick="goToStep(2)">3</div>
+            <div class="step" onclick="goToStep(3)">4</div>
+            <div class="step" onclick="goToStep(4)">5</div>
+            <div class="step" onclick="goToStep(5)">6</div>
+            <!-- <div class="step" onclick="goToStep(6)">7</div>
+            <div class="step" onclick="goToStep(7)">8</div> -->
+        </div>
+        <div class="path">
+            <div class="path-item completed" onclick="goToStep(0)">1</div>
+            <div class="path-item" onclick="goToStep(1)">2</div>
+            <div class="path-item" onclick="goToStep(2)">3</div>
+            <div class="path-item" onclick="goToStep(3)">4</div>
+            <div class="path-item" onclick="goToStep(4)">5</div>
+            <div class="path-item" onclick="goToStep(5)">6</div>
+            <!-- <div class="path-item" onclick="goToStep(6)">7</div>
+            <div class="path-item" onclick="goToStep(7)">8</div> -->
+        </div>
+        <div class="line">
+            <div class="connector"></div>
+        </div>
+        
+
+        <!-- Step 1 Content -->
+        <div class="step-content active">
+           
+            <div class="container">
+                <h2>Step 1: Candidate Information</h2>
+                <form id="myForm candidate-form" method="post" action="/generate_report_pdf/">
+                    {% csrf_token %}
+                
+                    <div class="form-group">
+                        <label for="projectTitle">Project Title:</label>
+                        <input type="text" id="projectTitle" name="projectTitle" required>
+                    </div>
+                    <!-- <div class="form-group"> -->
+                        <!-- <label for="department">Department:</label>
+                        <select id="department" name="department" required>
+                            <option value="CSE">Computer Science and Engineering</option>
+                            <option value="AIDS">Artifical Intelligence and Data Science</option>
+                            <option value="IT">Information Technology</option>
+                            <option value="MECH">Mechanical</option>
+                            <option value="CSBS">Computer Science and Business System </option>
+                            <option value="EEE">Electrical and Electronics</option>
+                            <option value="">Electronics Communication</option>
+                        </select> -->
+                    <!-- </div> -->
+                    <!-- <div class="form-group">
+                        <label for="projectType">College:</label>
+                        <select id="projectType" name="projectType" required>
+                            <option value="SIT">SIT</option>
+                            <option value="SEC">SEC</option>
+                        </select>
+                    </div> -->
+                    <div class="form-group" id="teamLeaderInfo">
+                        <label for="teamLeaderName">Team Leader Name:</label>
+                        <input type="text" id="teamLeaderName" name="teamLeaderName" required>
+                        </div>
+                        <div class="form-group">
+                        <label for="teamLeaderRegNo">Registration Number of Team Lead:</label>
+                        <input type="text" id="teamLeaderRegNo" name="teamLeaderRegNo" required>
+                        
+                    </div>
+                    <div class="form-group">
+                        <label for="candidate1">Candidate 1:</label>
+                        <input type="text" id="candidate1" name="candidate1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="candidate1RegNo">Registration Number of Candidate 1:</label>
+                        <input type="text" id="candidate1RegNo" name="candidate1RegNo" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="candidate2">Candidate 2:</label>
+                        <input type="text" id="candidate2" name="candidate2" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="candidate2RegNo">Registration Number of Candiadate 2:</label>
+                        <input type="text" id="candidate2RegNo" name="candidate2RegNo" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="candidate3">Candidate 3:</label>
+                        <input type="text" id="candidate3" name="candidate3">
+                    </div>
+                    <div class="form-group">
+                        <label for="candidate3RegNo">Registration Number of Candiadate 3:</label>
+                        <input type="text" id="candidate3RegNo" name="candidate3RegNo">
+                    </div>
+                    <!-- <button   id="generate-pdf-button">Generate PDF</button>  -->
+
+                </form>
+                <p class="success-message" id="successMessage"></p>
+                <p class="error-message" id="errorMessage"></p>
+            </div>
+
+
+        </div>
+
+        <!-- Step 2 Content -->
+        <div class="step-content">
+            <div class="container">
+            <h2>Step 2: Additional Information</h2>
+           
+                
+            <div class="form-group">
+                
+              <label for="degree">Degree:</label>
+             
+<select name="degree" id="degree">
+  <option value="be">Bachelor in Engineering</option>
+  <option value="me">Master of Engineering</option>
+  
+</select>
+            </div>
+            <div class="form-group">
+<label for="branch">Branch of Study:</label >        
+<select name="branch" id="branch" >
+  <option value="cse">Computer Science and Engineering</option>
+ 
+  <option value="aids">Artifical Intelligence and Data Science</option>
+  <option value="it">Information Technology</option>
+  <option value="mech">Mechanical</option>
+  <option value="csbs">Computer Science and Business System </option>
+  <option value="eee">Electrical and Electronics</option>
+  <option value="ece">Electronics Communication</option>
+
+</select>
+</div>
+<div class="form-group">
+<label for="college">Choose college:</label>  
+<select name="college">
+<option value="csbs">Sri Sairam Institute of Technology</option>
+  <option value="aids">Sri Sairam Engineering college</option>
+</select>
+</div>
+<div class="form-group lane">
+<!-- <label for="year" >Year of Study</label>
+
+<input type="radio" id="html" name="fav_language" value="1">
+ <label for="html" >1 st year</label>
+
+ <input type="radio" id="css" name="fav_language" value="2">
+<label for="css">2 nd year</label>
+<input type="radio" id="javascript" name="fav_language" value="3">
+<label for="javascript">3 rd year</label>
+<input type="radio" id="he" name="fav_language" value="4">
+<label for="he">4 th year</label>
+</div> -->
+<div class="form-group">
+    <label for="abstract"  >Abstract</label>
+    <textarea id="abstract"  name="abstract"
+    rows="20" cols="50"></textarea>
+
+
+</div>
+</div>
+                
+            </form>
+        </div>
+</div>
+        <!-- Repeat the step content sections for each step -->
+        <!-- Example for Step 3 Content -->
+        <div class="step-content">
+            <h2>Step 3: Step 3 Title</h2>
+            <form>
+                <!-- Add your form fields for Step 3 here -->
+                <div class="form-group">
+    <label for="justificationsdg"  >Justification for sdg</label>
+    <textarea id="justificationsdg" name="justificationsdg"  rows="10" cols="50"></textarea>
+
+</div>
+<div class="form-group">
+    <label for="justificationsap"  >Justification for sap</label>
+    <textarea id="justificationsap"  name="justificationsap"   rows="10" cols="50"></textarea>
+
+</div>
+
+            </form>
+        </div>
+        
+
+        <div class="step-content">
+            <h2>Step 4: Step 3 Title</h2>
+            <form>
+                <!-- Add your form fields for Step 3 here -->
+                <div class="form-group">
+                    <label for="accleration"  >Accleration</label>
+                    <textarea id="accleration" name="acceleration" rows="10" cols="50"></textarea>
+                
+                </div>
+                <div class="form-group">
+                    <label for="designing"  >DesignThinking</label>
+                    <textarea id="designing" name="designing"   rows="10" cols="50"></textarea>
+                
+                </div>
+            </form>
+        </div>
+        <div class="step-content">
+            <h2>Step 5: Step 3 Title</h2>
+            <form>
+                <!-- Add your form fields for Step 3 here -->
+                <div class="form-group">
+                    <label for="bootcamp"  >BootCamp</label>
+                    <textarea id="bootcamp" name="bootcamp" rows="10" cols="50"></textarea>
+                
+                </div>
+                <div class="form-group">
+                    <label for="business"  >Business</label>
+                    <textarea id="business" name="business" rows="10" cols="50"></textarea>
+                
+                </div>
+                
+            </form>
+        </div>
+        
+
+            <div class="step-content stepper" style="background-color: transparent;box-shadow: none;" >
+                <div class="modal" style="display: inherit;">
+                    <div class="modal-header">
+                        <div class="modal-logo">
+                            <span class="logo-circle">
+                                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="512" height="419.116" viewBox="0 0 512 419.116">
+                                    <defs>
+                                        <clipPath id="clip-folder-new">
+                                            <rect width="512" height="419.116" />
+                                        </clipPath>
+                                    </defs>
+                                    <g id="folder-new" clip-path="url(#clip-folder-new)">
+                                        <path id="Union_1" data-name="Union 1" d="M16.991,419.116A16.989,16.989,0,0,1,0,402.125V16.991A16.989,16.989,0,0,1,16.991,0H146.124a17,17,0,0,1,10.342,3.513L227.217,57.77H437.805A16.989,16.989,0,0,1,454.8,74.761v53.244h40.213A16.992,16.992,0,0,1,511.6,148.657L454.966,405.222a17,17,0,0,1-16.6,13.332H410.053v.562ZM63.06,384.573H424.722L473.86,161.988H112.2Z" fill="var(--c-action-primary)" stroke="" stroke-width="1" />
+                                    </g>
+                                </svg>
+                            </span>
+                        </div>
+                        <button class="btn-close">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0V0z"/><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" fill="var(--c-text-secondary)"/></svg>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <h2 class="modal-title">Upload a file</h2>
+                        <p class="modal-description">Attach the file below</p>
+                        <button class="upload-area">
+                            <span class="upload-area-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="30" height="40" viewBox="0 0 340.531 419.116">
+                  <g id="files-new" clip-path="url(#clip-files-new)">
+                    <path id="Union_2" data-name="Union 2" d="M-2904.708-8.885A39.292,39.292,0,0,1-2944-48.177V-388.708A39.292,39.292,0,0,1-2904.708-428h209.558a13.1,13.1,0,0,1,9.3,3.8l78.584,78.584a13.1,13.1,0,0,1,3.8,9.3V-48.177a39.292,39.292,0,0,1-39.292,39.292Zm-13.1-379.823V-48.177a13.1,13.1,0,0,0,13.1,13.1h261.947a13.1,13.1,0,0,0,13.1-13.1V-323.221h-52.39a26.2,26.2,0,0,1-26.194-26.195v-52.39h-196.46A13.1,13.1,0,0,0-2917.805-388.708Zm146.5,241.621a14.269,14.269,0,0,1-7.883-12.758v-19.113h-68.841c-7.869,0-7.87-47.619,0-47.619h68.842v-18.8a14.271,14.271,0,0,1,7.882-12.758,14.239,14.239,0,0,1,14.925,1.354l57.019,42.764c.242.185.328.485.555.671a13.9,13.9,0,0,1,2.751,3.292,14.57,14.57,0,0,1,.984,1.454,14.114,14.114,0,0,1,1.411,5.987,14.006,14.006,0,0,1-1.411,5.973,14.653,14.653,0,0,1-.984,1.468,13.9,13.9,0,0,1-2.751,3.293c-.228.2-.313.485-.555.671l-57.019,42.764a14.26,14.26,0,0,1-8.558,2.847A14.326,14.326,0,0,1-2771.3-147.087Z" transform="translate(2944 428)" fill="var(--c-action-primary)"/>
+                  </g>
+                </svg>
+                            </span>
+                            <span class="upload-area-title">Drag file(s) here to upload.</span>
+                            <span class="upload-area-description">
+                                Alternatively, you can select a file by <br/><strong>clicking here</strong>
+                            </span>
+                        </button>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-secondary" style="background-color: #0056b3;">Cancel</button>
+                        <button class="btn-primary">Upload File</button>
+                    </div>
+                </div>
+          
+        </div>
+        
+
+        <!-- Repeat for all remaining steps -->
+
+    </div>
+    <div class="navigation">
+      <button id="prevBtn" onclick="prevStep();">Previous</button>
+      <button id="nextBtn" onclick="nextStep();">Next</button>
+      <button id="submitBtn"  onclick="submitForm()" style="display: none;">Submit</button>
+      <!-- submitBtn -->
+  </div>
+
+    <script>
+
+        const steps = document.querySelectorAll(".step");
+        const pathItems = document.querySelectorAll(".path-item");
+        const lineConnector = document.querySelector(".line .connector");
+        var currentStep = 0;
+
+        function showStep(stepIndex) {
+        
+            steps[currentStep].classList.remove("active");
+            steps[stepIndex].classList.add("active");
+            pathItems[currentStep].classList.remove("active");
+            pathItems[currentStep].classList.add("completed");
+            pathItems[stepIndex].classList.add("active");
+            currentStep = stepIndex;
+
+            if (currentStep === 0) {
+                prevBtn.style.display = "none";
+            } else {
+                prevBtn.style.display = "block";
+            }
+
+            if (currentStep === steps.length - 1) {
+                nextBtn.style.display = "none";
+                submitBtn.style.display = "block";
+            } else {
+                nextBtn.style.display = "block";
+                submitBtn.style.display = "none";
+            }
+
+            // Animate the line connector
+            const stepWidth = 100 / (steps.length - 1);
+            lineConnector.style.width = stepWidth * currentStep;
+
+            // Show the step content for the current step
+            const stepContents = document.querySelectorAll(".step-content");
+            stepContents.forEach((content, index) => {
+                if (index === stepIndex) {
+                    content.classList.add("active");
+                } else {
+                    content.classList.remove("active");
+                }
+            });
+        }
+
+        function goToStep(stepIndex) {
+            if (stepIndex >= 0 && stepIndex < steps.length) {
+                pathItems[currentStep].innerHTML = currentStep + 1; // Show the step number again
+                showStep(stepIndex);
+
+            }
+        }
+
+        function prevStep() {
+           
+            if (currentStep > 0) {
+                pathItems[currentStep].innerHTML = currentStep + 1; // Show the step number again
+                showStep(currentStep - 1);
+                submitForm(currentStep);
+                alert(currentStep);
+            }
+
+        
+            
+        }
+
+        function nextStep() {
+            if (currentStep < steps.length - 1) {
+                pathItems[currentStep].innerHTML = '✓'; // Replace number with a tick
+                showStep(currentStep + 1);
+                submitForm(currentStep);
+                
+            }
+            
+            
+        }
+
+
+
+        
+    //     document.getElementById('submitBtn').addEventListener('click', function () {
+    // // generatePDF();
+    // submitForm(currentStep);
+    //     });
+
+
+        
+    
+     
+        table_Contents_Data=[]
+        function submitForm(currentStep,table_Contents_Data) {
+
+            
+
+            if (currentStep==1){
+                var projectTitle=document.getElementById('projectTitle');
+                var teamLeaderName=document.getElementById("teamLeaderName");
+  var candidate1=document.getElementById("candidate1");
+  var candidate2=document.getElementById("candidate2");
+  var candidate3=document.getElementById("candidate3");
+  var teamLeaderRegNo=document.getElementById('teamLeaderRegNo');
+  var candidate1RegNo=document.getElementById('candidate1RegNo');
+  var candidate2RegNo=document.getElementById('candidate2RegNo');
+  var candidate3RegNo=document.getElementById('candidate3RegNo');
+  table_Contents_Data.push({'candidate1': candidate1},
+  
+  {'projectTitle':projectTitle},
+  {'teamLeaderName':teamLeaderName},
+  {'candidate2':candidate2},{'candidate3':candidate3},{'teamLeaderRegNo':teamLeaderRegNo},
+  {'candidate1RegNo':candidate1RegNo},{'candidate2RegNo':candidate2RegNo},
+  {'candidate3RegNo':candidate3RegNo},);
+ 
+            }
+            else if( currentStep==2){
+                var branch =document.getElementById('branch');
+var degree=document.getElementById('degree');
+var college =document.getElementById('college');
+var abstract = document.getElementById('abstract');
+
+table_Contents_Data.push({
+    'college':college},
+    {'degree':degree},
+    {'branch':branch},
+    {'abstract':abstract});
+}
+
+else if(currentStep ==3){
+    var justificationsdg = document.getElementById('justificationsdg');
+var justificationsap = document.getElementById('justificationsap');
+table_Contents_Data.push(
+    {'justificationsdg': justificationsdg,
+},{'justificationsap': justificationsap,
+},
+)
+}
+else if(currentStep==4){
+    var acceleration = document.getElementById('acceleration');
+var designing = document.getElementById('designing');
+table_Contents_Data.push(
+    { 'acceleration': acceleration,
+},{'designing': designing,
+},
+)
+}
+
+else if(currentStep==5){
+
+    var bootcamp = document.getElementById('bootcamp');
+var business = document.getElementById('business');
+table_Contents_Data.push({ 'bootcamp': bootcamp,
+},{  'business':business
+});
+
+}
+
+else if (currentStep==6 || currentStep==5){
+     // image field should be uploaded
+     //js write for that
+     console.log(table_Contents_Data);
+     alert("asc")
+
+     var tableOfContentsJSON = JSON.stringify(table_Contents_Data);
+       $.ajax({
+      url: 'generate_report_pdf/',  // Replace with your Django view URL
+      type: 'POST',
+      data: {
+          'table_of_contents_data': tableOfContentsJSON
+      },
+      success: function (response) {
+          // Handle the PDF response if needed
+      }
+  });    
+
+}
+ 
+}
+
+        // showStep(currentStep);
+    </script>
+</body>
+</html>
