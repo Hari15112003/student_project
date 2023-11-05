@@ -24,5 +24,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('myapp.urls')),
     path('', RedirectView.as_view(pattern_name='generate_report_pdf', permanent=True)),
+    path("__reload__/", include("django_browser_reload.urls")),
     
 ]
